@@ -84,9 +84,8 @@ app.use(express.json());
 app.use(morgan('dev'));
 
 const BOT_TOKEN = process.env.BOT_TOKEN;
-const BOT_POLLING = process.env.BOT_POLLING !== '0';
 let bot: Telegraf | null = null;
-if (BOT_TOKEN && BOT_POLLING) {
+if (BOT_TOKEN) {
   bot = new Telegraf(BOT_TOKEN);
   bot.start(async (ctx) => {
     await ctx.reply('Привет! Открой менеджер WebApp:', Markup.inlineKeyboard([
@@ -110,8 +109,6 @@ if (BOT_TOKEN && BOT_POLLING) {
   })();
   process.once('SIGINT', () => bot?.stop('SIGINT'));
   process.once('SIGTERM', () => bot?.stop('SIGTERM'));
-} else if (BOT_TOKEN && !BOT_POLLING) {
-  console.warn('BOT_POLLING=0 — бот не запускает polling. Сервер API/UI работает без бота.');
 } else {
   console.warn('BOT_TOKEN is not set. Bot is disabled. Set BOT_TOKEN in .env');
 }
@@ -119,8 +116,8 @@ if (BOT_TOKEN && BOT_POLLING) {
 // Static WebApp
 app.use('/app', express.static(path.join(__dirname, '..', 'public')));
 
-// Redirect root to /app
-app.get('/', (_req, res) => res.redirect('/app'));
+// Root
+app.get('/', (_req, res) => res.status(404).json({ error: 'Not found. Use /app' }));
 
 // Health
 app.get('/health', (_req, res) => res.json({ ok: true }));
