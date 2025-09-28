@@ -8,7 +8,7 @@ import fs from 'fs';
 import crypto from 'crypto';
 import { Telegraf, Markup } from 'telegraf';
 
-type LinkItem = { url: string; description?: string; orderIndex: number };
+type LinkItem = { url: string; description: string; orderIndex: number };
 type MessageRecord = {
   id: string; // `${chatId}:${messageId}`
   chatId: number;
@@ -127,7 +127,7 @@ app.post('/api/messages', async (req, res) => {
     if (!bot) return res.status(500).json({ error: 'Bot is not configured' });
 
     const initialHtml = compileHtml(title, []);
-    const sent = await bot.telegram.sendMessage(chat_id, initialHtml, { parse_mode: 'HTML', disable_web_page_preview: true, reply_markup: { inline_keyboard: [[{ text: 'Редактировать', web_app: { url: (process.env.WEBAPP_URL || 'https://example.com/app') } }]] } });
+    const sent = await bot.telegram.sendMessage(chat_id, initialHtml, { parse_mode: 'HTML', link_preview_options: { is_disabled: true }, reply_markup: { inline_keyboard: [[{ text: 'Редактировать', web_app: { url: (process.env.WEBAPP_URL || 'https://example.com/app') } }]] } });
 
     const record: MessageRecord = {
       id: `${sent.chat.id}:${sent.message_id}`,
@@ -159,11 +159,17 @@ app.put('/api/messages/:id', async (req, res) => {
     if (!existing) return res.status(404).json({ error: 'Not found' });
 
     const newTitle: string = typeof title === 'string' ? title : existing.title;
-    const newLinks: LinkItem[] = Array.isArray(links) ? links.map((l:any, idx:number)=>({ url: String(l.url||''), description: l.description?String(l.description):undefined, orderIndex: typeof l.orderIndex==='number'?l.orderIndex:idx })) : existing.links;
+    const newLinks: LinkItem[] = Array.isArray(links)
+      ? links.map((l:any, idx:number)=>({
+          url: String(l.url||''),
+          description: String(l.description||''),
+          orderIndex: typeof l.orderIndex==='number'?l.orderIndex:idx
+        }))
+      : existing.links;
     const html = compileHtml(newTitle, newLinks);
 
     if (!bot) return res.status(500).json({ error: 'Bot is not configured' });
-    await bot.telegram.editMessageText(existing.chatId, existing.messageId, undefined, html, { parse_mode: 'HTML', disable_web_page_preview: true });
+    await bot.telegram.editMessageText(existing.chatId, existing.messageId, undefined, html, { parse_mode: 'HTML', link_preview_options: { is_disabled: true } });
 
     existing.title = newTitle;
     existing.links = newLinks;

@@ -22,7 +22,9 @@
     "telegraf": "^4.16.3"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
+    "@types/morgan": "^1.9.10",
     "@types/node": "^24.5.2",
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
