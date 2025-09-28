@@ -97,7 +97,16 @@ if (BOT_TOKEN) {
       [Markup.button.webApp('Открыть менеджер', process.env.WEBAPP_URL || 'https://example.com/app')]
     ]));
   });
-  bot.launch();
+  (async () => {
+    try {
+      // Ensure polling mode locally by removing any previously set webhook
+      await bot!.telegram.deleteWebhook({ drop_pending_updates: true });
+      await bot!.launch({ dropPendingUpdates: true });
+      console.log('Bot launched in polling mode');
+    } catch (err) {
+      console.error('Failed to launch bot', err);
+    }
+  })();
   process.once('SIGINT', () => bot?.stop('SIGINT'));
   process.once('SIGTERM', () => bot?.stop('SIGTERM'));
 } else {
